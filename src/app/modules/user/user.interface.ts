@@ -15,7 +15,7 @@ export interface IUser extends Document {
   division?: string;
   avatar?: string;
   roleId: typeof Types.ObjectId;
-  role: 'user'| 'client' | 'riuser' | 'masterAdmin';
+  role: 'user' | 'client' | 'riuser' | 'masterAdmin';
   status?: 'active' | 'inactive' | 'onLeave';
   note?: string;
   isMasterAdmin?: boolean;
@@ -26,7 +26,6 @@ export interface IUser extends Document {
   isEmailVerified: boolean;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
-
 
 export interface UserModel extends Model<IUser> {
   //instance methods for checking if the user exist

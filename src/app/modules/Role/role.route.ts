@@ -17,7 +17,7 @@ router.post(
 // Get all roles
 router.get(
   '/',
-  auth('user', 'client', 'riuser', 'masterAdmin'),
+  // auth('user', 'client', 'riuser', 'masterAdmin'),
   RoleControllers.getAllRoles,
 );
 

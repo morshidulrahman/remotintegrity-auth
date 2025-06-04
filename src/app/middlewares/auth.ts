@@ -21,17 +21,16 @@ const auth = (...requiredRoles: IUserRole[]) => {
     // Extract the token from the header
     const token = authHeader.split(' ')[1]; // "Bearer <token>" -> Extract <token>
 
-
     // checking if the given token is valid
     const decoded = jwt.verify(
       token,
       config.jwt_access_secret as string,
     ) as JwtPayload;
 
-    const { role, userId, iat, email } = decoded;
+    const { role, userId } = decoded;
 
     // eslint-disable-next-line no-console
-    console.log(email, userId, role, iat)
+
     // checking if the user is exist
     const user = await User.findById(userId);
 
@@ -65,10 +64,7 @@ const auth = (...requiredRoles: IUserRole[]) => {
 
     // Main Logic: Check for role authorization
     if (requiredRoles && !requiredRoles.includes(role)) {
-      throw new AppError(
-        httpStatus.UNAUTHORIZED,
-        'You are not authorized!',
-      );
+      throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized!');
     }
 
     // Additional check for admin role - verify if user is a master admin
@@ -80,16 +76,16 @@ const auth = (...requiredRoles: IUserRole[]) => {
     // }
 
     // Optional: stricter admin role check ONLY if 'admin' is the ONLY allowed role
-if (
-  requiredRoles.length === 1 &&
-  requiredRoles.includes('masterAdmin') &&
-  !user.isMasterAdmin
-) {
-  throw new AppError(
-    httpStatus.UNAUTHORIZED,
-    'Admin access requires master admin privileges!',
-  );
-}
+    if (
+      requiredRoles.length === 1 &&
+      requiredRoles.includes('masterAdmin') &&
+      !user.isMasterAdmin
+    ) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        'Admin access requires master admin privileges!',
+      );
+    }
 
     // Attach decoded information to the request object
     req.user = decoded as JwtPayload;

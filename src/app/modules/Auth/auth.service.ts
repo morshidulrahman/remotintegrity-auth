@@ -8,7 +8,6 @@ import { User } from '../user/user.model';
 import { TLoginUser } from './auth.interface';
 import { createToken, generateToken } from './auth.utils';
 
-
 // Configure email transporter
 const transporter = nodemailer.createTransport({
   host: config.email_host as string,
@@ -35,11 +34,12 @@ const sendEmail = async (to: string, subject: string, html: string) => {
     return info;
   } catch (error) {
     console.error('Error sending email:', error);
-    throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send email');
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Failed to send email',
+    );
   }
 };
-
-
 
 /**
  * Logs in a user by verifying credentials and generating access/refresh tokens.
@@ -49,15 +49,13 @@ const sendEmail = async (to: string, subject: string, html: string) => {
  */
 const loginUser = async (payload: TLoginUser) => {
   const { email, password } = payload;
-  console.log( email, password);
 
   // Check if the user exists
   //const user = await User.findOne({ email });
   const user = await User.findOne({ email }).populate({
     path: 'roleId',
-    select: 'roleName modules'
+    select: 'roleName modules',
   });
-  console.log(user);
 
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found');
@@ -82,26 +80,37 @@ const loginUser = async (payload: TLoginUser) => {
   // Generate JWT tokens
   const jwtPayload = {
     userId: user._id,
+    username: user.username,
     email: user.email,
     role: user.role,
+    position: user.position,
+    division: user.division,
+    avatar: user.avatar,
+    roleId: user.roleId,
+    status: user.status,
+    isMasterAdmin: user.isMasterAdmin,
+    isDeleted: user.isDeleted,
+    isBlocked: user.isBlocked,
+    needsPasswordChange: user.needsPasswordChange,
+    isEmailVerified: user.isEmailVerified,
   };
 
   const token = generateToken(
     jwtPayload,
     config.jwt_access_secret as string,
-    config.jwt_access_expires_in as string
-  )
+    config.jwt_access_expires_in as string,
+  );
 
   const accessToken = createToken(
     jwtPayload,
     config.jwt_access_secret as string,
-    config.jwt_access_expires_in as string
+    config.jwt_access_expires_in as string,
   );
 
   const refreshToken = createToken(
     jwtPayload,
     config.jwt_refresh_secret as string,
-    config.jwt_refresh_expires_in as string
+    config.jwt_refresh_expires_in as string,
   );
 
   return {
@@ -121,8 +130,6 @@ const changePassword = async (
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'This user is not found !');
   }
-
-  console.log(user);
 
   // checking if the user is already deleted
   const isDeleted = user?.isDeleted;
@@ -156,14 +163,13 @@ const changePassword = async (
       needsPasswordChange: false,
       passwordChangedAt: new Date(),
     },
-    { new: true }
+    { new: true },
   );
 
   console.log(result);
 
   return result;
 };
-
 
 const refreshToken = async (token: string) => {
   // checking if the given token is valid
@@ -218,7 +224,6 @@ const refreshToken = async (token: string) => {
   };
 };
 
-
 // @desc    Request password reset
 // @route   POST /api/auth/forgot-password
 // @access  Public
@@ -250,7 +255,7 @@ const forgotPassword = async (email: string) => {
   const resetToken = createToken(
     jwtPayload,
     config.jwt_reset_password_secret as string,
-    config.jwt_reset_password_expires_in as string
+    config.jwt_reset_password_expires_in as string,
   );
 
   // Create reset URL
@@ -305,7 +310,10 @@ const resetPassword = async (payload: {
 
   // Check if the token is for the correct user
   if (decoded.email !== email) {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'Token does not match user email');
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      'Token does not match user email',
+    );
   }
 
   // Find the user
@@ -339,11 +347,14 @@ const resetPassword = async (payload: {
       passwordChangedAt: new Date(),
       needsPasswordChange: false,
     },
-    { new: true }
+    { new: true },
   );
 
   if (!updatedUser) {
-    throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to update password');
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Failed to update password',
+    );
   }
 
   // Send confirmation email
@@ -377,7 +388,10 @@ const verifyEmail = async (token: string) => {
       config.jwt_verify_email_secret as string,
     ) as JwtPayload;
   } catch (error) {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid or expired verification token');
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      'Invalid or expired verification token',
+    );
   }
 
   const { userId } = decoded;
@@ -413,11 +427,14 @@ const verifyEmail = async (token: string) => {
       isEmailVerified: true,
       emailVerifiedAt: new Date(),
     },
-    { new: true }
+    { new: true },
   );
 
   if (!updatedUser) {
-    throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to verify email');
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Failed to verify email',
+    );
   }
 
   // Send confirmation email
@@ -476,7 +493,7 @@ const sendVerificationEmail = async (userId: string) => {
   const verificationToken = createToken(
     jwtPayload,
     config.jwt_verify_email_secret as string,
-    config.jwt_verify_email_expires_in as string
+    config.jwt_verify_email_expires_in as string,
   );
 
   // Create verification URL
@@ -504,10 +521,12 @@ const sendVerificationEmail = async (userId: string) => {
   return {
     message: 'Verification email sent successfully',
     // Don't send the token in production, this is just for development
-    ...(config.NODE_ENV === 'development' && { verificationToken, verificationUrl }),
+    ...(config.NODE_ENV === 'development' && {
+      verificationToken,
+      verificationUrl,
+    }),
   };
 };
-
 
 export const AuthServices = {
   loginUser,
@@ -516,8 +535,5 @@ export const AuthServices = {
   resetPassword,
   forgotPassword,
   verifyEmail,
-  sendVerificationEmail
+  sendVerificationEmail,
 };
-
-
-

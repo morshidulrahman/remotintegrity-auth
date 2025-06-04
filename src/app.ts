@@ -11,13 +11,14 @@ import globalErrorHandler from './app/middlewares/globalErrorhandler';
 import notFound from './app/middlewares/notFound';
 import router from './app/routes';
 import path from 'path';
-import { scheduleActivityCleanup } from './app/modules/Activity/activity.jobs';
-
 
 const app: Application = express();
 
 const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+  origin: (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void,
+  ) => {
     const allowedOrigins = [
       'http://localhost:5173',
       'http://localhost:5174',
@@ -36,7 +37,6 @@ const corsOptions = {
       'https://dev.gari.remoteintegrity.com',
       'https://erp.remoteintegrity.com',
       'https://erp.remoteintegrity.com:3000',
-
     ];
 
     if (!origin || allowedOrigins.includes(origin)) {
@@ -63,22 +63,14 @@ app.use(morgan('dev'));
 // Serve static files from the 'images' directory
 //app.use('/images', express.static(path.join(process.cwd(), 'images')));
 
-
 // Application Routes
 app.use('/api/v1', router);
-
-
-
-
-// Schedule background jobs
-scheduleActivityCleanup();
 
 app.get('/', (req, res) => {
   res.status(200).json({
     message: 'RemoteIntegrity Backend Server is running!',
   });
 });
-
 
 app.use(globalErrorHandler);
 // Not Found
